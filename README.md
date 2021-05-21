@@ -3,9 +3,11 @@ This is a brief exploration of bad codegen by an over-zealous optimizer.
 - [Intro](#intro)
 - [The problem](#the-problem)
 - [Domain restrictions](#domain-restrictions)
-- [Lookup table](#lookup-table)
-- [Branchless](#branchless)
-- [Benchmarks](#benchmarks)
+- [The bug report](#the-bug-report)
+- [Better factorials](#better-factorials)
+	- [Lookup table](#lookup-table)
+	- [Branchless](#branchless)
+	- [Benchmarks](#benchmarks)
 
 ## Intro
 
@@ -249,7 +251,19 @@ harmful.
 Even with explicitly telling the compiler `n <= 12`, clang is still generating unrolled code for the
 case where `n >= 32` (the branch from basic block 5 to basic block 16).
 
-## Lookup table
+
+## The bug report
+
+The bug report can be found [here](https://bugs.llvm.org/show_bug.cgi?id=50412).
+
+This bug is two-fold: unrolling for `n >= 32` generated despite an assumption and DCE for this path is obfuscated by the entry condition (which isn't just a simple `icmp` but rather
+`(unsigned)((n & -8) - 8) >= 24`).
+
+## Better factorials
+
+The rest of this document considers a few other strategies for computing the factorial.
+
+### Lookup table
 
 What's remarkable about this codegen is that all the unrolling and vectorization can be beaten by a
 simple lookup table. The only penalty here would come from memory access / a potential cache miss.
@@ -301,7 +315,7 @@ factorial(int):                          ## @factorial(int)
         .long   479001600                       ## 0x1c8cfc00
 ```
 
-## Branchless
+### Branchless
 
 Theoretically, factorial can be implemented branchless and without memory access time (potential
 cache miss) with a series of cmov instructions. This is similar to the idea behind sorting network
@@ -405,7 +419,7 @@ factorial(int):                          ## @factorial(int)
         ret
 ```
 
-## Benchmarks
+### Benchmarks
 
 ```
 --------------------------------------------------------------------------
