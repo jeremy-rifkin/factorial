@@ -360,75 +360,47 @@ int factorial(int n) {
 }
 ```
 
-```assembly
-factorial(int):                          ## @factorial(int)
-        xor     eax, eax
-        xor     ecx, ecx
-        cmp     edi, 2
-        setl    al
-        setg    cl
-        mov     edx, 2
-        sub     edx, eax
-        lea     eax, [rcx + rcx]
-        add     eax, 1
-        imul    eax, edx
-        xor     ecx, ecx
-        cmp     edi, 3
-        setg    cl
-        lea     ecx, [rcx + 2*rcx]
-        add     ecx, 1
-        xor     edx, edx
-        cmp     edi, 4
-        setg    dl
-        lea     esi, [4*rdx + 1]
-        imul    esi, ecx
-        imul    esi, eax
-        xor     eax, eax
-        cmp     edi, 5
-        setg    al
-        cmp     edi, 7
-        mov     r8d, 1
-        mov     ecx, 7
-        cmovl   ecx, r8d
-        lea     eax, [rax + 4*rax]
-        add     eax, 1
-        imul    ecx, eax
-        xor     eax, eax
-        cmp     edi, 8
-        mov     edx, 8
-        cmovl   edx, r8d
-        setg    al
-        imul    edx, ecx
-        imul    edx, esi
-        lea     eax, [8*rax + 1]
-        xor     ecx, ecx
-        cmp     edi, 9
-        setg    cl
-        lea     ecx, [rcx + 8*rcx]
-        add     ecx, 1
-        imul    ecx, eax
-        cmp     edi, 11
-        mov     esi, 11
-        cmovl   esi, r8d
-        imul    esi, ecx
-        cmp     edi, 12
-        mov     eax, 12
-        cmovl   eax, r8d
-        imul    eax, esi
-        imul    eax, edx
-        ret
+### Cmov lookup table
+
+Similar to the above, just conditionally move the correct result into a return variable. This generates a [long chain of cmp/mov/cmovne instructions](https://godbolt.org/z/q95vjEzhx).
+
+```cpp
+consteval int f(int n) {
+    if(n <= 0) [[unlikely]] return 1;
+    return n * f(n-1);
+}
+#define Y(x) if(n == x) v = f(x)
+int factorial_lookup_table_1(int n) {
+	int v;
+	Y(0);
+	Y(1);
+	Y(2);
+	Y(3);
+	Y(4);
+	Y(5);
+	Y(6);
+	Y(7);
+	Y(8);
+	Y(9);
+	Y(10);
+	Y(11);
+	Y(12);
+	return v;
+}
 ```
 
 ### Benchmarks
 
 ```
---------------------------------------------------------------------------
-Benchmark                                Time             CPU   Iterations
---------------------------------------------------------------------------
-bench_factorial_basic                 24.3 ns         24.2 ns     28921053
-bench_factorial_lookup_table          7.56 ns         7.56 ns     92897508
-bench_factorial_branchless_0          13.3 ns         13.3 ns     52907346
-bench_factorial_branchless_1          10.8 ns         10.8 ns     64776236
+---------------------------------------------------------------------------------
+Benchmark                                       Time             CPU   Iterations
+---------------------------------------------------------------------------------
+bench_factorial_basic                        24.2 ns         24.2 ns     28796413
+bench_factorial_lookup_table_switch          7.54 ns         7.54 ns     92837977
+bench_factorial_lookup_table_cmov            9.63 ns         9.63 ns     72599394
+bench_factorial_branchless_0                 13.2 ns         13.2 ns     52776804
+bench_factorial_branchless_1                 10.8 ns         10.8 ns     64725687
+bench_factorial_stirling                     29.9 ns         29.9 ns     23399969
 ```
 
 The basic factorial (recursion transformed into iteration then unrolled / vecorized) is the slowest.
@@ -442,13 +414,14 @@ table itself is cached.
 Similar results for 64-bit equivalents:
 
 ```
---------------------------------------------------------------------------
-Benchmark                                Time             CPU   Iterations
---------------------------------------------------------------------------
-bench_factorial_basic_64              26.3 ns         26.3 ns     26557197
-bench_factorial_lookup_table_64       8.01 ns         8.01 ns     87420057
-bench_factorial_branchless_0_64       15.9 ns         15.9 ns     44145341
-bench_factorial_branchless_1_64       14.3 ns         14.3 ns     48949945
+---------------------------------------------------------------------------------
+Benchmark                                       Time             CPU   Iterations
+---------------------------------------------------------------------------------
+bench_factorial_basic_64                     26.3 ns         26.3 ns     26689198
+bench_factorial_lookup_table_64_switch       7.99 ns         7.99 ns     87721075
+bench_factorial_lookup_table_64_cmov         11.1 ns         11.1 ns     62948992
+bench_factorial_branchless_0_64              15.8 ns         15.8 ns     44265469
+bench_factorial_branchless_1_64              14.3 ns         14.3 ns     48801203
 ```
 
 Benchmark source code can be found in [benchmark.cpp](benchmark.cpp).

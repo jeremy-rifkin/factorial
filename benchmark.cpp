@@ -13,8 +13,9 @@ consteval int32_t f(int32_t n) {
     if(n <= 0) [[unlikely]] return 1;
     return n * f(n-1);
 }
+
 #define X(n) case n: return f(n)
-static int32_t factorial_lookup_table(int32_t n) {
+static int32_t factorial_lookup_table_switch(int32_t n) {
     switch(n) {
         X(0);
         X(1);
@@ -31,6 +32,25 @@ static int32_t factorial_lookup_table(int32_t n) {
         X(12);
         default: __builtin_unreachable();
     }
+}
+
+#define Y(x) if(n == x) v = f(x)
+static int32_t factorial_lookup_table_cmov(int32_t n) {
+	int32_t v;
+	Y(0);
+	Y(1);
+	Y(2);
+	Y(3);
+	Y(4);
+	Y(5);
+	Y(6);
+	Y(7);
+	Y(8);
+	Y(9);
+	Y(10);
+	Y(11);
+	Y(12);
+	return v;
 }
 
 static int32_t factorial_branchless_0(int32_t n) {
@@ -81,7 +101,8 @@ static int32_t factorial_stirling(int32_t n) {
 BENCHMARK(bench_##fn)
 
 bench_fn(factorial_basic);
-bench_fn(factorial_lookup_table);
+bench_fn(factorial_lookup_table_switch);
+bench_fn(factorial_lookup_table_cmov);
 bench_fn(factorial_branchless_0);
 bench_fn(factorial_branchless_1);
 bench_fn(factorial_stirling);
@@ -95,9 +116,10 @@ consteval int64_t f_64(int64_t n) {
     if(n <= 0) [[unlikely]] return 1;
     return n * f_64(n-1);
 }
+
 #undef X
 #define X(n) case n: return f_64(n)
-static int64_t factorial_lookup_table_64(int64_t n) {
+static int64_t factorial_lookup_table_64_switch(int64_t n) {
     switch(n) {
         X(0);
         X(1);
@@ -122,6 +144,34 @@ static int64_t factorial_lookup_table_64(int64_t n) {
         X(20);
         default: __builtin_unreachable();
     }
+}
+
+#undef Y
+#define Y(x) if(n == x) v = f_64(x)
+static int64_t factorial_lookup_table_64_cmov(int64_t n) {
+	int64_t v;
+	Y(0);
+	Y(1);
+	Y(2);
+	Y(3);
+	Y(4);
+	Y(5);
+	Y(6);
+	Y(7);
+	Y(8);
+	Y(9);
+	Y(10);
+	Y(11);
+	Y(12);
+	Y(13);
+	Y(14);
+	Y(15);
+	Y(16);
+	Y(17);
+	Y(18);
+	Y(19);
+	Y(20);
+	return v;
 }
 
 static int64_t factorial_branchless_0_64(int64_t _n) {
@@ -173,7 +223,8 @@ static int64_t factorial_branchless_1_64(int64_t n) {
 BENCHMARK(bench_##fn)
 
 bench_fn(factorial_basic_64);
-bench_fn(factorial_lookup_table_64);
+bench_fn(factorial_lookup_table_64_switch);
+bench_fn(factorial_lookup_table_64_cmov);
 bench_fn(factorial_branchless_0_64);
 bench_fn(factorial_branchless_1_64);
 
