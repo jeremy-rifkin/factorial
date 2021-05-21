@@ -1,6 +1,6 @@
-#include <chrono>
 #include <stdlib.h>
 #include <stdint.h>
+#include <cmath>
 
 #include <benchmark/benchmark.h>
 
@@ -63,6 +63,15 @@ static int32_t factorial_branchless_1(int32_t n) {
     return a;
 }
 
+constexpr double pi = 3.14159265358979323846;
+constexpr double E = 2.71828182845904523536;
+constexpr double twopi = 2 * pi;
+
+static int32_t factorial_stirling(int32_t n) {
+	// note: this isn't fantastic in terms of finding true performance because the calls to std::sqrt and std::pow are not inlined.
+	return std::sqrt(twopi * n) * std::pow(n / E, n);
+}
+
 #define bench_fn(fn) static void bench_##fn(benchmark::State& state) { \
 	for (auto _ : state) { \
 		int32_t n = rand() % 13; \
@@ -75,6 +84,7 @@ bench_fn(factorial_basic);
 bench_fn(factorial_lookup_table);
 bench_fn(factorial_branchless_0);
 bench_fn(factorial_branchless_1);
+bench_fn(factorial_stirling);
 
 static int64_t factorial_basic_64(int64_t n) {
     if(n <= 0) [[unlikely]] return 1;
