@@ -4,6 +4,10 @@
 
 #include <benchmark/benchmark.h>
 
+#ifdef __GNUG__
+#define __builtin_assume(c) if(!(c)) { __builtin_unreachable(); }
+#endif
+
 static int32_t factorial_basic(int32_t n) {
     if(n <= 0) [[unlikely]] return 1;
     return n * factorial_basic(n-1);

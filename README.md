@@ -424,4 +424,29 @@ bench_factorial_branchless_0_64              15.8 ns         15.8 ns     4426546
 bench_factorial_branchless_1_64              14.3 ns         14.3 ns     48801203
 ```
 
+Similar results on GCC, though GCC doesn't over-vectorize / excessively unroll:
+
+```
+---------------------------------------------------------------------------------
+Benchmark                                       Time             CPU   Iterations
+---------------------------------------------------------------------------------
+bench_factorial_basic                        21.3 ns         21.3 ns     32879977
+bench_factorial_lookup_table_switch          8.05 ns         8.05 ns     87076339
+bench_factorial_lookup_table_cmov            19.4 ns         19.4 ns     36128897
+bench_factorial_branchless_0                 20.5 ns         20.5 ns     34223768
+bench_factorial_branchless_1                 21.4 ns         21.4 ns     32864825
+bench_factorial_stirling                     30.5 ns         30.5 ns     22611355
+```
+
+```
+---------------------------------------------------------------------------------
+Benchmark                                       Time             CPU   Iterations
+---------------------------------------------------------------------------------
+bench_factorial_basic_64                     22.9 ns         22.9 ns     30053681
+bench_factorial_lookup_table_64_switch       7.54 ns         7.54 ns     93002576
+bench_factorial_lookup_table_64_cmov         22.0 ns         22.0 ns     31718022
+bench_factorial_branchless_0_64              23.0 ns         23.0 ns     30381200
+bench_factorial_branchless_1_64              36.0 ns         36.0 ns     19457112
+```
+
 Benchmark source code can be found in [benchmark.cpp](benchmark.cpp).
